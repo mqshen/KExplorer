@@ -1,0 +1,34 @@
+{
+  "name": "English",
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "interface": {
+    "new_conn": "Add Connection",
+    "empty_server_content": "Select and open a connection from the left panel"
+  },
+  "menu": {
+    "preferences": "Preferences",
+    "report_bug": "Report Bug",
+    "user_guide": "User Guide",
+    "check_update": "Check for Updates...",
+    "about": "About"
+  },
+  "ribbon": {
+    "server": "Server",
+    "browser": "Data Browser",
+    "log": "Log",
+    "github": "Github"
+  },
+  "dialogue": {
+    "connection": {
+      "new_title": "New Connection",
+      "edit_title": "Edit Connection",
+      "general": "General",
+      "illegal_characters": "Contains illegal characters",
+      "test": "Test Connection",
+      "parse_url_clipboard": "Parse URL from Clipboard"
+    }
+  }
+}
