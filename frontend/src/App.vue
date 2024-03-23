@@ -1,18 +1,21 @@
 <script setup>
 import ConnectionDialog from './components/dialogs/ConnectionDialog.vue'
 import { h, onMounted, ref, watch } from 'vue'
-import usePreferencesStore from './stores/preferences.ts'
-import { darkThemeOverrides, themeOverrides } from '@/utils/theme.ts'
+import usePreferencesStore from './stores/preferences'
+import useConnectionStore from './stores/connections'
+import { darkThemeOverrides, themeOverrides } from '@/utils/theme'
 
 import AppContent from "./AppContent.vue"
 
 const initializing = ref(true)
 
 const prefStore = usePreferencesStore()
+const connectionStore = useConnectionStore()
 
 onMounted(async () => {
     try {
         initializing.value = true
+        await connectionStore.initConnections()
     } finally {
         initializing.value = false
     }

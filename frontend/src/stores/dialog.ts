@@ -11,12 +11,18 @@ export const ConnDialogType = {
 }
 
 const useDialogStore = defineStore('dialog', {
+    state: () => ({
+        connDialogVisible: false,
+    }),
     actions: {
         openNewDialog() {
             this.connParam = null
             this.connType = ConnDialogType.NEW
             this.connDialogVisible = true
         },
+        closeConnDialog() {
+            this.connDialogVisible = false
+        }
     }
 })
 

@@ -175,7 +175,6 @@ onMounted(async () => {
                         :key="t.name"
                         :server="t.name"
                         class="flex-item-expand" />
-                jjjjjs
                 </div>
 
                 <!-- server list page -->

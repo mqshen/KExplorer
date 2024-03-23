@@ -26,6 +26,11 @@
       "new_title": "New Connection",
       "edit_title": "Edit Connection",
       "general": "General",
+      "no_group": "No Group",
+      "group": "Group",
+      "conn_name": "Name",
+      "addr": "Address",
+      "name_tip": "Connection name",
       "illegal_characters": "Contains illegal characters",
       "test": "Test Connection",
       "parse_url_clipboard": "Parse URL from Clipboard"

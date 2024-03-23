@@ -1,5 +1,5 @@
 <script setup>
-import { isEmpty } from "lodash";
+import { every, includes, isEmpty, map } from "lodash";
 import { computed, nextTick, ref, watch } from "vue";
 import useDialog, { ConnDialogType } from "stores/dialog";
 import { useI18n } from "vue-i18n";
@@ -17,7 +17,7 @@ const testing = ref(false);
 const testResult = ref(null);
 
 const generalFormRef = ref(null);
-const generalForm = ref({});
+const generalForm = ref(null);
 
 const resetForm = () => {
   generalForm.value = connectionStore.newDefaultConnection();
@@ -25,8 +25,8 @@ const resetForm = () => {
   testing.value = false;
   testResult.value = null;
   tab.value = "general";
-  loadingSentinelMaster.value = false;
 };
+
 const isEditMode = computed(() => dialogStore.connType === ConnDialogType.EDIT);
 const closingConnection = computed(() => {
   if (isEmpty(editName.value)) {
@@ -38,22 +38,20 @@ const closingConnection = computed(() => {
 const generalFormRules = () => {
   const requiredMsg = i18n.t("dialogue.field_required");
   const illegalChars = ["/", "\\"];
-  return {
-    name: [
-      { required: true, message: requiredMsg, trigger: "input" },
-      {
-        validator: (rule, value) => {
-          return every(illegalChars, (c) => !includes(value, c));
-        },
-        message: i18n.t("dialogue.illegal_characters"),
-        trigger: "input",
-      },
-    ],
-    addr: { required: true, message: requiredMsg, trigger: "input" },
-    defaultFilter: { required: true, message: requiredMsg, trigger: "input" },
-    keySeparator: { required: true, message: requiredMsg, trigger: "input" },
-  };
+  return {};
 };
+
+const groupOptions = computed(() => {
+  const options = map(connectionStore.groups, (group) => ({
+    label: group,
+    value: group,
+  }));
+  options.splice(0, 0, {
+    label: "dialogue.connection.no_group",
+    value: "",
+  });
+  return options;
+});
 
 const onTestConnection = async () => {
   testResult.value = "";
@@ -76,6 +74,46 @@ const onTestConnection = async () => {
     testResult.value = "";
   }
 };
+
+const onClose = () => {
+  dialogStore.closeConnDialog();
+};
+
+const onSaveConnection = async () => {
+  // validate general form
+  await generalFormRef.value?.validate((err) => {
+    if (err) {
+      nextTick(() => (tab.value = "general"));
+    }
+  });
+
+  // store new connection
+  const { success, msg } = await connectionStore.saveConnection(
+    isEditMode.value ? editName.value : null,
+    generalForm.value
+  );
+  if (!success) {
+    $message.error(msg);
+    return;
+  }
+
+  $message.success(i18n.t("dialogue.handle_succ"));
+  onClose();
+};
+
+const pasteFromClipboard = async () => {};
+
+watch(
+  () => dialogStore.connDialogVisible,
+  (visible) => {
+    if (visible) {
+      console.log("lsllslslsl");
+      resetForm();
+      generalForm.value =
+        dialogStore.connParam || connectionStore.newDefaultConnection();
+    }
+  }
+);
 </script>
 <template>
   <n-modal
@@ -123,7 +161,7 @@ const onTestConnection = async () => {
                 required
               >
                 <n-input
-                  :value="generalForm.name"
+                  v-model:value="generalForm.name"
                   :placeholder="$t('dialogue.connection.name_tip')"
                 />
               </n-form-item-gi>
@@ -134,7 +172,7 @@ const onTestConnection = async () => {
                 required
               >
                 <n-select
-                  :value="generalForm.group"
+                  v-model:value="generalForm.group"
                   :options="groupOptions"
                   :render-label="
                     ({ label, value }) => (value === '' ? $t(label) : label)
@@ -149,12 +187,12 @@ const onTestConnection = async () => {
               >
                 <n-input-group>
                   <n-input
-                    :value="generalForm.addr"
+                    v-model:value="generalForm.addr"
                     :placeholder="$t('dialogue.connection.addr_tip')"
                   />
                   <n-text style="width: 40px; text-align: center">:</n-text>
                   <n-input-number
-                    :value="generalForm.port"
+                    v-model:value="generalForm.port"
                     :max="65535"
                     :min="1"
                     :show-button="false"

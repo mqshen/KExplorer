@@ -23,7 +23,7 @@ var version = "0.0.0"
 
 func main() {
 	connSvc := services.Connection()
-
+	browserSvc := services.Browser()
 	prefSvc := services.Preferences()
 
 	prefSvc.SetAppVersion(version)
@@ -55,7 +55,7 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			//sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
-			//browserSvc.Start(ctx)
+			browserSvc.Start(ctx)
 			//cliSvc.Start(ctx)
 			//monitorSvc.Start(ctx)
 			//pubsubSvc.Start(ctx)
@@ -63,10 +63,16 @@ func main() {
 			//services.GA().SetSecretKey(gaMeasurementID, gaSecretKey)
 			//services.GA().Startup(version)
 		},
+		OnShutdown: func(ctx context.Context) {
+			browserSvc.Stop()
+			//cliSvc.CloseAll()
+			//monitorSvc.StopAll()
+			//pubsubSvc.StopAll()
+		},
 		Bind: []interface{}{
 			//sysSvc,
 			connSvc,
-			//browserSvc,
+			browserSvc,
 			//cliSvc,
 			//monitorSvc,
 			//pubsubSvc,
