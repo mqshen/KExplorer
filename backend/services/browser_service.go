@@ -2,18 +2,22 @@ package services
 
 import (
 	"context"
-	"github.com/segmentio/kafka-go"
+	"encoding/json"
+	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/go-zookeeper/zk"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"kafkaexplorer/backend/consts"
 	"kafkaexplorer/backend/types"
 	"sync"
 )
 
 type connectionItem struct {
-	client     *kafka.Conn
+	client     *zk.Conn
 	ctx        context.Context
 	cancelFunc context.CancelFunc
-	cursor     map[int]uint64 // current cursor of databases
 	stepSize   int64
-	db         int // current database index
+	root       string // current database index
 }
 
 type browserService struct {
@@ -78,5 +82,182 @@ func (b *browserService) CloseConnection(name string) (resp types.JSResp) {
 		}
 	}
 	resp.Success = true
+	return
+}
+
+// OpenDatabase open select database, and list all keys
+// @param path contain connection name and db name
+func (b *browserService) GetKafkaMetaData(server string) (resp types.JSResp) {
+
+	item, err := b.getZkClient(server)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	brokers := b.getBrokers(item)
+	if len(brokers) == 0 {
+		resp.Msg = "brokers is empty"
+		return
+	}
+
+	kafkaClient, err := b.getKafkaClient(server, brokers[0])
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	topics := b.getTopics(kafkaClient)
+	consumers := b.getConsumers(kafkaClient)
+
+	var brokerServers []string
+	for _, broker := range brokers {
+		brokerServers = append(brokerServers, fmt.Sprintf("%s:%d", broker.Host, broker.Port))
+	}
+	resp.Success = true
+	resp.Data = map[string]any{
+		"brokers":   brokerServers,
+		"topics":    topics,
+		"consumers": consumers,
+	}
+	return
+}
+
+func (b *browserService) getBrokers(item *connectionItem) []types.Broker {
+	path := fmt.Sprintf("%s%s", item.root, "brokers/ids")
+	runtime.LogInfo(b.ctx, fmt.Sprintf("path %v", path))
+	client := item.client
+	ids, _, err := client.Children(path)
+	if err != nil {
+		return nil
+	}
+	var brokers []types.Broker
+	for _, id := range ids {
+		idPath := fmt.Sprintf("%s/%s", path, id)
+
+		runtime.LogInfo(b.ctx, fmt.Sprintf("path %v", idPath))
+		jsonData, _, err := client.Get(idPath)
+		if err != nil {
+			runtime.LogInfo(b.ctx, fmt.Sprintf("path %v", err))
+			continue
+		}
+		var broker types.Broker
+		err = json.Unmarshal(jsonData, &broker)
+		if err != nil {
+			runtime.LogInfo(b.ctx, fmt.Sprintf("path 1 %v", err))
+			continue
+		}
+		brokers = append(brokers, broker)
+	}
+	return brokers
+}
+
+func (b *browserService) getTopics(client *kafka.AdminClient) []string {
+	metadata, err := client.GetMetadata(nil, true, 5000)
+	if err != nil {
+		runtime.LogErrorf(b.ctx, fmt.Sprintf("get topic error %v", err))
+		return nil
+	}
+	var topics []string
+	for topic := range metadata.Topics {
+		topics = append(topics, topic)
+	}
+	return topics
+}
+
+func (b *browserService) getConsumers(conn *kafka.AdminClient) []string {
+	result, err := conn.ListConsumerGroups(b.ctx)
+	if err != nil {
+		return nil
+	}
+
+	var consumers []string
+	for _, consumer := range result.Valid {
+		consumers = append(consumers, consumer.GroupID)
+	}
+
+	return consumers
+}
+
+// get a redis client from local cache or create a new open
+// if db >= 0, will also switch to db index
+func (b *browserService) getZkClient(server string) (item *connectionItem, err error) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	var ok bool
+	var client *zk.Conn
+	if item, ok = b.connMap[server]; ok {
+
+		// close previous connection if database is not the same
+		if item.cancelFunc != nil {
+			item.cancelFunc()
+		}
+		item.client.Close()
+		delete(b.connMap, server)
+	}
+
+	// recreate new connection after switch database
+	selConn := Connection().getConnection(server)
+	if selConn == nil {
+		err = fmt.Errorf("no match connection \"%s\"", server)
+		return
+	}
+	var connConfig = selConn.ConnectionConfig
+	client, err = b.createZkClient(connConfig)
+	if err != nil {
+		err = fmt.Errorf("can not connect to server \"%s\", %s", server, err.Error())
+		return
+	}
+	ctx, cancelFunc := context.WithCancel(b.ctx)
+	item = &connectionItem{
+		client:     client,
+		ctx:        ctx,
+		cancelFunc: cancelFunc,
+		root:       "/", //connConfig.Root,
+	}
+	if item.stepSize <= 0 {
+		item.stepSize = consts.DEFAULT_LOAD_SIZE
+	}
+	b.connMap[server] = item
+	return
+}
+
+// get a redis client from local cache or create a new open
+// if db >= 0, will also switch to db index
+func (b *browserService) getKafkaClient(server string, broker types.Broker) (client *kafka.AdminClient, err error) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	// recreate new connection after switch database
+	selConn := Connection().getConnection(server)
+	if selConn == nil {
+		err = fmt.Errorf("no match connection \"%s\"", server)
+		return
+	}
+	var connConfig = selConn.ConnectionConfig
+
+	connConfig.Bootstrap = fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	runtime.LogInfo(b.ctx, fmt.Sprintf("connect to kafka %s", connConfig.Bootstrap))
+	client, err = b.createKafkaClient(connConfig)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (b *browserService) createZkClient(selConn types.ConnectionConfig) (client *zk.Conn, err error) {
+	client, err = Connection().createZkClient(selConn)
+	if err != nil {
+		err = fmt.Errorf("create conenction error: %s", err.Error())
+		return
+	}
+	return
+}
+
+func (b *browserService) createKafkaClient(selConn types.ConnectionConfig) (client *kafka.AdminClient, err error) {
+	client, err = Connection().createKafkaClient(selConn)
+	if err != nil {
+		err = fmt.Errorf("create conenction error: %s", err.Error())
+		return
+	}
 	return
 }

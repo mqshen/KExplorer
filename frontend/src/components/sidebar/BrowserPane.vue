@@ -1,5 +1,6 @@
 <script setup>
-import { computed, reactive } from 'vue'
+import { isEmpty } from 'lodash'
+import { computed, reactive, ref, onMounted } from 'vue'
 import useBrowserStore from 'stores/browser'
 import BrowserTree from './BrowserTree.vue'
 
@@ -12,24 +13,20 @@ const fullyLoaded = ref(false)
 
 const props = defineProps({
     server: String,
-    db: {
-        type: Number,
-        default: 0,
-    },
 })
 
-const loadProgress = computed(() => {
-    const hasPattern = !isEmpty(filterForm.pattern)
-    if (hasPattern) {
-        return 100
-    }
+// const loadProgress = computed(() => {
+//     const hasPattern = !isEmpty(filterForm.pattern)
+//     if (hasPattern) {
+//         return 100
+//     }
 
-    const db = browserStore.getDatabase(props.server, props.db)
-    if (db.maxKeys <= 0) {
-        return 100
-    }
-    return (db.keyCount * 100) / Math.max(db.keyCount, db.maxKeys)
-})
+//     const db = browserStore.getDatabase(props.server)
+//     if (db.maxKeys <= 0) {
+//         return 100
+//     }
+//     return (db.keyCount * 100) / Math.max(db.keyCount, db.maxKeys)
+// })
 
 const filterForm = reactive({
     type: '',
@@ -37,6 +34,35 @@ const filterForm = reactive({
     pattern: '',
     filter: '',
 })
+
+const onReload = async () => {
+    try {
+        loading.value = true
+        // tabStore.setSelectedKeys(props.server)
+        // browserStore.closeConnection(props.server)
+
+        // let matchType = unref(filterForm.type)
+        // if (!types.hasOwnProperty(matchType)) {
+        //     matchType = ''
+        // }
+        // browserStore.setKeyFilter(props.server, {
+        //     type: matchType,
+        //     pattern: unref(filterForm.pattern),
+        //     exact: unref(filterForm.exact) === true,
+        // })
+        console.log(" test for test", props.server)
+        await browserStore.getKafkaMetaData(props.server)
+        // fullyLoaded.value = await browserStore.loadMoreKeys(props.server)
+        // $message.success(i18n.t('dialogue.reload_succ'))
+    } catch (e) {
+        console.warn(e)
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(() => onReload())
+
 </script>
 <template>
 
@@ -45,12 +71,10 @@ const filterForm = reactive({
     <browser-tree
             ref="browserTreeRef"
             :check-mode="inCheckState"
-            :db="props.db"
             :full-loaded="fullyLoaded"
-            :loading="loading && loadProgress <= 0"
+            :loading="loading"
             :pattern="filterForm.filter"
             :server="props.server" />
-            jsjdfjsjdfjsjdfj
 </div>
     
 </template>

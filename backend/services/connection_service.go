@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/segmentio/kafka-go"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/go-zookeeper/zk"
 	. "kafkaexplorer/backend/storage"
 	"kafkaexplorer/backend/types"
+	"log"
 	"strings"
 	"sync"
+	"time"
 )
 
 type cmdHistoryItem struct {
@@ -38,28 +41,40 @@ func Connection() *connectionService {
 }
 
 func (c *connectionService) TestConnection(config types.ConnectionConfig) (resp types.JSResp) {
-	conn, err := c.createKafkaClient(config)
+	conn, err := c.createZkClient(config)
 	if err != nil {
 		resp.Msg = err.Error()
 		return
 	}
-	defer func(conn *kafka.Conn) {
-		err := conn.Close()
-		if err != nil {
+	defer conn.Close()
 
-		}
-	}(conn)
-
-	if _, err = conn.ReadPartitions(); err != nil {
-		resp.Msg = err.Error()
-	} else {
-		resp.Success = true
-	}
+	//if _, err = conn.ReadPartitions(); err != nil {
+	//	resp.Msg = err.Error()
+	//} else {
+	resp.Success = true
+	//}
 	return
 }
 
-func (c *connectionService) createKafkaClient(config types.ConnectionConfig) (*kafka.Conn, error) {
-	conn, err := kafka.Dial("tcp", fmt.Sprintf("%s:%d", config.Addr, config.Port))
+func (c *connectionService) createKafkaClient(config types.ConnectionConfig) (*kafka.AdminClient, error) {
+	conf := kafka.ConfigMap{
+		"bootstrap.servers":        config.Bootstrap,
+		"allow.auto.create.topics": "false"}
+	adminClient, err := kafka.NewAdminClient(&conf)
+	if err != nil {
+		log.Println("Failed to create AdminClient: %s\n", err)
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return adminClient, nil
+}
+
+func (c *connectionService) createZkClient(config types.ConnectionConfig) (*zk.Conn, error) {
+	server := fmt.Sprintf("%s:%d", config.Addr, config.Port)
+	conn, _, err := zk.Connect([]string{server}, time.Second*20)
 	if err != nil {
 		return nil, err
 	}

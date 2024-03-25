@@ -1,15 +1,28 @@
-import { findIndex, isEmpty, set } from 'lodash'
+import { findIndex, isEmpty, set, get, find } from 'lodash'
 import { defineStore } from 'pinia'
-// import { TabItem } from '@/objects/tabItem'
+import { TabItem } from '@/objects/tabItem'
 
 const useTabStore = defineStore('tab', {
     state: () => ({
         nav: 'server',
         asideWidth: 300,
         tabList: [],
-        activatedIndex: 0, 
+        activatedIndex: 0,
     }),
     getters: {
+        /**
+         * get current tab list item
+         * @returns {TabItem[]}
+         */
+        tabs() {
+            // if (isEmpty(this.tabList)) {
+            //     this.newBlankTab()
+            // }
+            return this.tabList
+        },
+        currentTabName() {
+            return get(this.tabs, [this.activatedIndex, 'name'])
+        },
     },
     actions: {
         /**
@@ -41,12 +54,9 @@ const useTabStore = defineStore('tab', {
         }) {
             let tabIndex = findIndex(this.tabList, { name: server })
             if (tabIndex === -1) {
-                // const tabItem = new TabItem({
-                //     name: server,
-                //     title: server,
-                //     server,
-                // })
-                // this.tabList.push(tabItem)
+                console.log("skskskksks", server)
+                const tabItem = new TabItem(server, server)
+                this.tabList.push(tabItem)
                 tabIndex = this.tabList.length - 1
             } else {
                 const tab = this.tabList[tabIndex]
@@ -56,7 +66,40 @@ const useTabStore = defineStore('tab', {
                 tab.server = server
             }
             this._setActivatedIndex(tabIndex, true)
-        }
+        },/**
+        * set expanded keys for server
+        * @param {string} server
+        * @param {string[]} keys
+        */
+        setExpandedKeys(server, keys = []) {
+            /** @type TabItem**/
+            let tab = find(this.tabList, { name: server })
+            if (tab != null) {
+                if (isEmpty(keys)) {
+                    tab.expandedKeys = []
+                } else {
+                    tab.expandedKeys = keys
+                }
+            }
+        },/**
+        * set selected keys for server
+        * @param {string} server
+        * @param {string|string[]} [keys]
+        */
+       setSelectedKeys(server, keys = null) {
+           /** @type TabItem**/
+           let tab = find(this.tabList, { name: server })
+           if (tab != null) {
+               if (keys == null) {
+                   // select nothing
+                   tab.selectedKeys = []
+               } else if (typeof keys === 'string') {
+                   tab.selectedKeys = [keys]
+               } else {
+                   tab.selectedKeys = keys
+               }
+           }
+       },
     }
 })
 

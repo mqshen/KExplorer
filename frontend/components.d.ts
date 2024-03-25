@@ -25,6 +25,8 @@ declare module 'vue' {
     Folder: typeof import('./src/components/icons/Folder.vue')['default']
     Github: typeof import('./src/components/icons/Github.vue')['default']
     IconButton: typeof import('./src/components/common/IconButton.vue')['default']
+    Key: typeof import('./src/components/icons/Key.vue')['default']
+    Layer: typeof import('./src/components/icons/Layer.vue')['default']
     NAvatar: typeof import('naive-ui')['NAvatar']
     NButton: typeof import('naive-ui')['NButton']
     NCard: typeof import('naive-ui')['NCard']

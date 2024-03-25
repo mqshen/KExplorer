@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { isEmpty } from 'lodash'
-import { CloseConnection, OpenConnection } from 'wailsjs/go/services/browserService'
+import { isEmpty, get } from 'lodash'
+import { CloseConnection, OpenConnection, GetKafkaMetaData } from 'wailsjs/go/services/browserService'
 import useTabStore from 'stores/tab'
 import { KafkaServerState } from '@/objects/kafkaServerState'
 
@@ -58,6 +58,56 @@ const useBrowserStore = defineStore('browser', {
             const tabStore = useTabStore()
             tabStore.removeTabByName(name)
             return true
+        },
+        /**
+         * open database and load all keys
+         * @param server
+         * @param db
+         * @returns {Promise<void>}
+         */
+        async getKafkaMetaData(server) {
+            console.log("start get kafka meta data")
+            const { data, success, msg } = await GetKafkaMetaData(server)
+            if (!success) {
+                throw new Error(msg)
+            }
+            const { brokers = [], topics = [], consumers = [] } = data
+
+            /** @type {KafkaServerState} **/
+            const serverInst = this.servers[server]
+            if (serverInst == null) {
+                return
+            }
+            serverInst.loadingState.fullLoaded = true
+
+            if (isEmpty(brokers) && isEmpty(topics) && isEmpty(consumers)) {
+                serverInst.nodeMap.clear()
+            } else {
+                // append db node to current connection's children
+                serverInst.addNodes(brokers, "Brokers")
+                serverInst.addNodes(topics, "Topics")
+                serverInst.addNodes(consumers, "Consumers")
+            }
+            // serverInst.tidyNode('', false)
+        },
+        /**
+         * get key struct in current database
+         * @param {string} server
+         * @param {boolean} [includeRoot]
+         * @return {RedisNodeItem[]}
+         */
+        getKeyStruct(server, includeRoot) {
+            /** @type {KafkaServerState} **/
+            const serverInst = this.servers[server]
+            let rootNode = null
+            if (serverInst != null) {
+                rootNode = serverInst.getRoot()
+            }
+            if (includeRoot === true) {
+                return [rootNode]
+            }
+            let result = get(rootNode, 'children', [])
+            return result;
         },
     },
     getters: {

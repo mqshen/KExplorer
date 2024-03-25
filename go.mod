@@ -5,14 +5,11 @@ go 1.21
 toolchain go1.22.0
 
 require (
+	github.com/confluentinc/confluent-kafka-go/v2 v2.3.0
+	github.com/go-zookeeper/zk v1.0.3
 	github.com/vrischmann/userdir v0.0.0-20151206171402-20f291cebd68
 	github.com/wailsapp/wails/v2 v2.8.0
 	gopkg.in/yaml.v3 v3.0.1
-)
-
-require (
-	github.com/klauspost/compress v1.15.9 // indirect
-	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 )
 
 require (
@@ -33,7 +30,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/samber/lo v1.38.1 // indirect
-	github.com/segmentio/kafka-go v0.4.47
 	github.com/tkrajina/go-reflector v0.5.6 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect

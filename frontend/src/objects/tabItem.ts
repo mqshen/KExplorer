@@ -7,15 +7,15 @@ export class TabItem {
     end: boolean
     loading: boolean
 
-    // constructor({
-    //     name,
-    //     title,
-    //     end = false,
-    //     loading = false,
-    // }) {
-    //     this.name = name
-    //     this.title = title
-    //     this.end = end
-    //     this.loading = loading
-    // }
+    constructor(
+        name,
+        title,
+        end = false,
+        loading = false,
+    ) {
+        this.name = name
+        this.title = title
+        this.end = end
+        this.loading = loading
+    }
 }

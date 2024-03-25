@@ -107,7 +107,6 @@ watch(
   () => dialogStore.connDialogVisible,
   (visible) => {
     if (visible) {
-      console.log("lsllslslsl");
       resetForm();
       generalForm.value =
         dialogStore.connParam || connectionStore.newDefaultConnection();

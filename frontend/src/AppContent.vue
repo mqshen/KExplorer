@@ -34,6 +34,11 @@ const exThemeVars = computed(() => {
     return extraTheme(prefStore.isDark)
 })
 
+// watchEffect(() => {
+//     if (tabStore.nav === 'browser') {
+//         console.log("000000")
+//     }
+// })
 
 const hideRadius = ref(false)
 
@@ -152,7 +157,7 @@ onMounted(async () => {
                 :style="prefStore.generalFont"
                 class="flex-box-h flex-item-expand"
                 style="--wails-draggable: none">
-                <ribbon v-model:value="tabStore.nav" :width="data.navMenuWidth" />
+                <ribbon :value="tabStore.nav" :width="data.navMenuWidth" />
                 <!-- browser page -->
                 <div v-show="tabStore.nav === 'browser'" class="content-area flex-box-h flex-item-expand">
                     <resizeable-wrapper
@@ -165,9 +170,9 @@ onMounted(async () => {
                             v-for="t in tabStore.tabs"
                             v-show="tabStore.currentTabName === t.name"
                             :key="t.name"
-                            :db="t.db"
                             :server="t.name"
-                            class="app-side flex-item-expand" />
+                            class="app-side flex-item-expand" >
+                            </browser-pane>
                     </resizeable-wrapper>
                     <content-pane
                         v-for="t in tabStore.tabs"

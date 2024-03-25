@@ -113,6 +113,13 @@ const renderPrefix = ({ option }) => {
     }
 }
 
+const onCancelOpen = () => {
+    if (!isEmpty(connectingServer.value)) {
+        browserStore.closeConnection(connectingServer.value)
+        connectingServer.value = ''
+    }
+}
+
 const nodeProps = ({ option }) => {
     return {
         onDblclick: async () => {
@@ -173,6 +180,7 @@ const handleSelectContextMenu = (key) => {
         return
     }
     const [group, name] = split(selectedKey, '/')
+    console.log("selectedKey", selectedKey, group, name)
     if (isEmpty(group) && isEmpty(name)) {
         return
     }
