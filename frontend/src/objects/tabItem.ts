@@ -6,6 +6,7 @@ export class TabItem {
     title: string
     end: boolean
     loading: boolean
+    currentNode: Object
 
     constructor(
         name,
@@ -17,5 +18,6 @@ export class TabItem {
         this.title = title
         this.end = end
         this.loading = loading
+        this.currentNode = {}
     }
 }

@@ -3,6 +3,7 @@ import { isEmpty, get } from 'lodash'
 import { CloseConnection, OpenConnection, GetKafkaMetaData } from 'wailsjs/go/services/browserService'
 import useTabStore from 'stores/tab'
 import { KafkaServerState } from '@/objects/kafkaServerState'
+import { NodeType } from "@/consts/kafka_node_type"
 
 const useBrowserStore = defineStore('browser', {
     state: () => ({
@@ -84,9 +85,9 @@ const useBrowserStore = defineStore('browser', {
                 serverInst.nodeMap.clear()
             } else {
                 // append db node to current connection's children
-                serverInst.addNodes(brokers, "Brokers")
-                serverInst.addNodes(topics, "Topics")
-                serverInst.addNodes(consumers, "Consumers")
+                serverInst.addNodes(brokers, "Brokers", NodeType.Broker)
+                serverInst.addNodes(topics, "Topics", NodeType.Topic)
+                serverInst.addNodes(consumers, "Consumers", NodeType.Consumer)
             }
             // serverInst.tidyNode('', false)
         },

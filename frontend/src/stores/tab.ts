@@ -20,6 +20,14 @@ const useTabStore = defineStore('tab', {
             // }
             return this.tabList
         },
+
+        /**
+         * get current activated tab item
+         * @returns {TabItem|null}
+         */
+        currentTab() {
+            return get(this.tabs, this.activatedIndex)
+        },
         currentTabName() {
             return get(this.tabs, [this.activatedIndex, 'name'])
         },
@@ -86,20 +94,29 @@ const useTabStore = defineStore('tab', {
         * @param {string} server
         * @param {string|string[]} [keys]
         */
-       setSelectedKeys(server, keys = null) {
-           /** @type TabItem**/
-           let tab = find(this.tabList, { name: server })
-           if (tab != null) {
-               if (keys == null) {
-                   // select nothing
-                   tab.selectedKeys = []
-               } else if (typeof keys === 'string') {
-                   tab.selectedKeys = [keys]
-               } else {
-                   tab.selectedKeys = keys
-               }
-           }
-       },
+        setSelectedKeys(server, keys = null, node) {
+            console.log(server, keys)
+            /** @type TabItem**/
+            let tab = find(this.tabList, { name: server })
+            if (tab != null) {
+                if (keys == null) {
+                    // select nothing
+                    tab.selectedKeys = []
+                } else if (typeof keys === 'string') {
+                    tab.selectedKeys = [keys]
+                } else {
+                    tab.selectedKeys = keys
+                }
+                tab.currentNode.label = node.label
+            }
+        },
+        switchSubTab(name) {
+            const tab = this.currentTab
+            if (tab == null) {
+                return
+            }
+            tab.subTab = name
+        },
     }
 })
 

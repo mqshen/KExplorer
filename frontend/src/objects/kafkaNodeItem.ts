@@ -1,7 +1,9 @@
+import { NodeType } from "@/consts/kafka_node_type"
 export class KafkaNodeItem {
     key: string
     label: string
     name: string
+    type: NodeType
     keyCount: Number = 0
     isLeaf: Boolean = false
     opened: Boolean = false
@@ -12,6 +14,7 @@ export class KafkaNodeItem {
         key,
         label,
         name,
+        type = NodeType.Topic,
         keyCount = 0,
         isLeaf = false,
         opened = false,
@@ -21,6 +24,7 @@ export class KafkaNodeItem {
         key: string,
         label: string,
         name: string,
+        type: NodeType,
         keyCount: Number,
         isLeaf: Boolean,
         opened: Boolean,
@@ -30,6 +34,7 @@ export class KafkaNodeItem {
         this.key = key
         this.label = label
         this.name = name
+        this.type = type
         this.keyCount = keyCount
         this.isLeaf = isLeaf
         this.opened = opened

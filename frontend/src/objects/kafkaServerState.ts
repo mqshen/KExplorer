@@ -1,5 +1,6 @@
 
 import { KafkaNodeItem } from '@/objects/kafkaNodeItem'
+import { NodeType } from "@/consts/kafka_node_type"
 /**
  * server connection state
  */
@@ -39,7 +40,7 @@ export class KafkaServerState {
         this.nodeMap = nodeMap
     }
 
-    addNodes(brokers, nodeKey) {
+    addNodes(brokers, nodeKey, nodeType) {
         const result = {
             success: false,
             newLayer: 0,
@@ -51,6 +52,7 @@ export class KafkaServerState {
             key: broker,
             label: broker,
             name: broker,
+            type: nodeType,
             isLeaf: true,
         })
 

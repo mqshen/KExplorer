@@ -6,7 +6,17 @@
   },
   "interface": {
     "new_conn": "Add Connection",
-    "empty_server_content": "Select and open a connection from the left panel"
+    "empty_server_content": "Select and open a connection from the left panel",
+    "general": "General",
+    "content_types": "Content Types",
+    "message": "Message",
+    "topic_name": "Topic Name",
+    "key": "Key",
+    "value": "Value",
+    "update": "Update",
+    "sub_tab": {
+      "properties": "properties"
+    }
   },
   "menu": {
     "preferences": "Preferences",

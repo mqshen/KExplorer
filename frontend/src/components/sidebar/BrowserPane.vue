@@ -63,6 +63,7 @@ const onReload = async () => {
 
 onMounted(() => onReload())
 
+
 </script>
 <template>
 
@@ -74,7 +75,8 @@ onMounted(() => onReload())
             :full-loaded="fullyLoaded"
             :loading="loading"
             :pattern="filterForm.filter"
-            :server="props.server" />
+            :server="props.server" 
+            />
 </div>
     
 </template>

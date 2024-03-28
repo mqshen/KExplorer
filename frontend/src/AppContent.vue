@@ -107,6 +107,8 @@ onMounted(async () => {
     const maximised = await WindowIsMaximised()
     onToggleMaximize(maximised)
 })
+
+
 </script>
 
 <template>

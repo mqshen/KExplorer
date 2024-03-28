@@ -1,7 +1,7 @@
 <script setup>
 import { includes, isEmpty, get, size } from "lodash";
-import { computed, reactive, ref, h} from "vue";
-import { NIcon, NSpace, NText, useThemeVars } from 'naive-ui';
+import { computed, reactive, ref, h } from "vue";
+import { NIcon, NSpace, NText, useThemeVars } from "naive-ui";
 import { useI18n } from "vue-i18n";
 import useConnectionStore from "stores/connections";
 import useBrowserStore from "stores/browser";
@@ -67,10 +67,12 @@ const selectedKeys = computed(() => {
   }
   return [];
 });
+const emit = defineEmits(['change'])
 
 const onUpdateSelectedKeys = (keys, options) => {
   if (!isEmpty(keys)) {
-    tabStore.setSelectedKeys(props.server, keys);
+    console.log(keys, options)
+    tabStore.setSelectedKeys(props.server, keys, options[0]);
   } else {
     // default is load blank key to display server status
     // tabStore.openBlank(props.server)
@@ -186,8 +188,6 @@ const renderSuffix = ({ option }) => {
   }
   return null;
 };
-
-
 </script>
 
 <template>
@@ -220,7 +220,7 @@ const renderSuffix = ({ option }) => {
       check-strategy="child"
       class="fill-height"
       virtual-scroll
-            @update:selected-keys="onUpdateSelectedKeys"
+      @update:selected-keys="onUpdateSelectedKeys"
     />
 
     <!-- context menu -->
