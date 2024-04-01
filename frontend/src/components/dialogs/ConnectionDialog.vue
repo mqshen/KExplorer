@@ -1,16 +1,18 @@
 <script setup>
-import { every, includes, isEmpty, map } from "lodash";
+import { get, isEmpty, map } from "lodash";
 import { computed, nextTick, ref, watch } from "vue";
 import useDialog, { ConnDialogType } from "stores/dialog";
 import { useI18n } from "vue-i18n";
 import { TestConnection } from "wailsjs/go/services/connectionService";
 import useConnectionStore from "stores/connections";
+import useBrowserStore from "stores/browser";
 const i18n = useI18n();
 
 const editName = ref("");
 
 const dialogStore = useDialog();
 const connectionStore = useConnectionStore();
+const browserStore = useBrowserStore();
 
 const tab = ref("general");
 const testing = ref(false);
@@ -108,6 +110,7 @@ watch(
   (visible) => {
     if (visible) {
       resetForm();
+      editName.value = get(dialogStore.connParam, "name", "");
       generalForm.value =
         dialogStore.connParam || connectionStore.newDefaultConnection();
     }

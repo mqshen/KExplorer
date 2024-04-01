@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -9,15 +10,21 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"kafkaexplorer/backend/consts"
 	"kafkaexplorer/backend/types"
+	"math"
+	"sort"
 	"sync"
 )
 
+const KafkaTimeOut = 5000
+
 type connectionItem struct {
+	server     string
 	client     *zk.Conn
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 	stepSize   int64
 	root       string // current database index
+	brokers    []types.Broker
 }
 
 type browserService struct {
@@ -105,6 +112,7 @@ func (b *browserService) GetKafkaMetaData(server string) (resp types.JSResp) {
 		resp.Msg = err.Error()
 		return
 	}
+	defer kafkaClient.Close()
 	topics := b.getTopics(kafkaClient)
 	consumers := b.getConsumers(kafkaClient)
 
@@ -147,6 +155,7 @@ func (b *browserService) getBrokers(item *connectionItem) []types.Broker {
 		}
 		brokers = append(brokers, broker)
 	}
+	item.brokers = brokers
 	return brokers
 }
 
@@ -209,6 +218,7 @@ func (b *browserService) getZkClient(server string) (item *connectionItem, err e
 	}
 	ctx, cancelFunc := context.WithCancel(b.ctx)
 	item = &connectionItem{
+		server:     server,
 		client:     client,
 		ctx:        ctx,
 		cancelFunc: cancelFunc,
@@ -258,6 +268,181 @@ func (b *browserService) createKafkaClient(selConn types.ConnectionConfig) (clie
 	if err != nil {
 		err = fmt.Errorf("create conenction error: %s", err.Error())
 		return
+	}
+	return
+}
+
+type KafkaMessage struct {
+	Partition int32        `json:"partition" yaml:"partition"`
+	Offset    kafka.Offset `json:"offset" yaml:"offset"`
+	Key       string       `json:"key" yaml:"key"`
+	Value     string       `json:"value" yaml:"value"`
+	Timestamp string       `json:"timestamp" yaml:"timestamp"`
+}
+
+func (b *browserService) fetchOldestMessages(item *connectionItem, topic string, param types.FetchRequest) []KafkaMessage {
+	broker := item.brokers[0]
+	bootstrap := fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": bootstrap})
+	if err != nil {
+		runtime.LogErrorf(b.ctx, fmt.Sprintf("Failed to create Admin client: %s\n", err))
+		return nil
+	}
+	defer adminClient.Close()
+
+	metadata, err := adminClient.GetMetadata(&topic, false, KafkaTimeOut)
+	if err != nil {
+		runtime.LogErrorf(b.ctx, fmt.Sprintf("get topic metadata error %v", err))
+		return nil
+	}
+	totalSize := param.Size * len(metadata.Topics)
+
+	return b.fetchMessages(item, topic, nil, false, totalSize, param)
+}
+
+func (b *browserService) fetchMessages(item *connectionItem, topic string, positions []kafka.TopicPartition, needSeek bool, totalSize int, param types.FetchRequest) []KafkaMessage {
+
+	broker := item.brokers[0]
+	bootstrap := fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	runtime.LogInfo(b.ctx, fmt.Sprintf("start connect to broker %s position: %v", bootstrap, positions))
+
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers":        bootstrap,
+		"broker.address.family":    "v4",
+		"group.id":                 "kafka_explorer_main",
+		"session.timeout.ms":       6000,
+		"auto.offset.reset":        "earliest",
+		"enable.auto.offset.store": false,
+	})
+	if err != nil {
+		runtime.LogInfo(b.ctx, fmt.Sprintf("connect to broker failed %s", err))
+		return nil
+	}
+	defer c.Close()
+	if needSeek {
+		_, err = c.SeekPartitions(positions)
+		if err != nil {
+			runtime.LogInfo(b.ctx, fmt.Sprintf("seek partition failed %s", err))
+			return nil
+		}
+	}
+
+	runtime.LogInfo(b.ctx, fmt.Sprintf("subscribe to topic %s", topic))
+	err = c.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		runtime.LogInfo(b.ctx, fmt.Sprintf("subscribe to topic failed %s", err))
+		return nil
+	}
+
+	var messages []KafkaMessage
+	var times = 0
+
+	var valueDeserFunc func(value []byte) string
+	switch param.ValueSerializer {
+
+	case types.String:
+		valueDeserFunc = func(value []byte) string {
+			return string(value)
+		}
+	default:
+		valueDeserFunc = func(value []byte) string {
+			return base64.StdEncoding.EncodeToString(value)
+		}
+	}
+
+	for {
+		if len(messages) >= totalSize || times > 5 {
+			break
+		}
+		ev := c.Poll(30000)
+		if ev == nil {
+			times += 1
+			continue
+		}
+		switch e := ev.(type) {
+		case *kafka.Message:
+			messages = append(messages, KafkaMessage{
+				Partition: e.TopicPartition.Partition,
+				Offset:    e.TopicPartition.Offset,
+				Key:       valueDeserFunc(e.Key),
+				Value:     valueDeserFunc(e.Value),
+				Timestamp: e.Timestamp.Format("2006-01-02 15:04:05"),
+			})
+
+		case kafka.Error:
+			times += 1
+		default:
+			runtime.LogInfo(b.ctx, fmt.Sprintf("Ignored %v\n", e))
+			times += 1
+		}
+	}
+	sort.Slice(messages, func(i, j int) bool {
+		return messages[i].Timestamp > messages[j].Timestamp
+	})
+	return messages
+}
+
+func (b *browserService) fetchNewestMessages(item *connectionItem, topic string, param types.FetchRequest) []KafkaMessage {
+	broker := item.brokers[0]
+	bootstrap := fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": bootstrap})
+	if err != nil {
+		runtime.LogErrorf(b.ctx, fmt.Sprintf("Failed to create Admin client: %s\n", err))
+		return nil
+	}
+	defer adminClient.Close()
+
+	metadata, err := adminClient.GetMetadata(&topic, false, KafkaTimeOut)
+	if err != nil {
+		runtime.LogErrorf(b.ctx, fmt.Sprintf("get topic metadata error %v", err))
+		return nil
+	}
+	if t, ok := metadata.Topics[topic]; ok {
+		topicPartitionOffsets := make(map[kafka.TopicPartition]kafka.OffsetSpec)
+		for partition := range t.Partitions {
+			tp := kafka.TopicPartition{Topic: &topic, Partition: int32(partition)}
+			topicPartitionOffsets[tp] = kafka.LatestOffsetSpec
+		}
+		results, err := adminClient.ListOffsets(b.ctx, topicPartitionOffsets,
+			kafka.SetAdminIsolationLevel(kafka.IsolationLevelReadCommitted))
+		if err != nil {
+			runtime.LogErrorf(b.ctx, fmt.Sprintf("get topic metadata error %v", err))
+			return nil
+		}
+
+		var topics []kafka.TopicPartition
+		for tp, v := range results.ResultInfos {
+			tp.Offset = kafka.Offset(math.Max(float64(int64(v.Offset)-int64(param.Size)), float64(0)))
+			topics = append(topics, tp)
+		}
+
+		totalSize := param.Size * len(topics)
+		return b.fetchMessages(item, topic, topics, true, totalSize, param)
+	}
+	return nil
+}
+
+func (b *browserService) FetchMessages(server string, topic string, param types.FetchRequest) (resp types.JSResp) {
+	if len(server) == 0 || len(topic) == 0 {
+		resp.Msg = "server or topic can not be empty"
+		return
+	}
+
+	item, ok := b.connMap[server]
+	if ok {
+		var messages []KafkaMessage
+		if param.MessageOrder == types.Oldest {
+			messages = b.fetchOldestMessages(item, topic, param)
+		} else {
+			messages = b.fetchNewestMessages(item, topic, param)
+		}
+
+		resp.Success = true
+		resp.Data = map[string]any{
+			"messages": messages,
+		}
+	} else {
+		resp.Msg = fmt.Sprintf("can not find connection for server %s topic %s", server, topic)
 	}
 	return
 }

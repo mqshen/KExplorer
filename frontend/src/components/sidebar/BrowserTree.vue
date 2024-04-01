@@ -8,7 +8,10 @@ import useBrowserStore from "stores/browser";
 import useTabStore from "stores/tab";
 import { parseHexColor } from "@/utils/rgb";
 import Layer from "@/components/icons/Layer.vue";
-import Key from "@/components/icons/Key.vue";
+import Broker from "@/components/icons/Broker.vue";
+import Consumer from "@/components/icons/Consumer.vue";
+import Message from "@/components/icons/Message.vue";
+import { NodeType } from "@/consts/kafka_node_type";
 
 const props = defineProps({
   server: String,
@@ -67,11 +70,11 @@ const selectedKeys = computed(() => {
   }
   return [];
 });
-const emit = defineEmits(['change'])
+const emit = defineEmits(["change"]);
 
 const onUpdateSelectedKeys = (keys, options) => {
   if (!isEmpty(keys)) {
-    console.log(keys, options)
+    console.log(keys, options);
     tabStore.setSelectedKeys(props.server, keys, options[0]);
   } else {
     // default is load blank key to display server status
@@ -106,7 +109,6 @@ const onUpdateExpanded = (value, option, meta) => {
 };
 
 const data = computed(() => {
-  console.log("lllls");
   return browserStore.getKeyStruct(props.server, props.checkMode);
 });
 
@@ -131,7 +133,13 @@ const nodeProps = ({ option }) => {
 
 const renderPrefix = ({ option }) => {
   if (option.isLeaf) {
-    return h(NIcon, { size: 20 }, () => h(Key));
+    if (option.type == NodeType.Topic) {
+      return h(NIcon, { size: 20 }, () => h(Message));
+    } 
+    if (option.type == NodeType.Broker) {
+      return h(NIcon, { size: 20 }, () => h(Broker));
+    }
+    return h(NIcon, { size: 20 }, () => h(Consumer));
   } else {
     return h(
       NIcon,
@@ -241,3 +249,12 @@ const renderSuffix = ({ option }) => {
     />
   </div>
 </template>
+
+<style lang="scss" scoped>
+@import "@/styles/content";
+
+.browser-tree-wrapper {
+  height: 100%;
+  overflow: hidden;
+}
+</style>

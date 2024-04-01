@@ -166,3 +166,34 @@ func (c *ConnectionsStorage) defaultConnections() types.Connections {
 func (c *ConnectionsStorage) GetConnections() (ret types.Connections) {
 	return c.getConnections()
 }
+
+// DeleteConnection remove special connection
+func (c *ConnectionsStorage) DeleteConnection(name string) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	conns := c.getConnections()
+	var updated bool
+	for i, conn := range conns {
+		if conn.Type == "group" {
+			for j, subConn := range conn.Connections {
+				if subConn.Name == name {
+					conns[i].Connections = append(conns[i].Connections[:j], conns[i].Connections[j+1:]...)
+					updated = true
+					break
+				}
+			}
+		} else if conn.Name == name {
+			conns = append(conns[:i], conns[i+1:]...)
+			updated = true
+			break
+		}
+		if updated {
+			break
+		}
+	}
+	if !updated {
+		return errors.New("no match connection")
+	}
+	return c.saveConnections(conns)
+}

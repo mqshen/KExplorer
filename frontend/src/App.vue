@@ -1,25 +1,28 @@
 <script setup>
-import ConnectionDialog from './components/dialogs/ConnectionDialog.vue'
-import { h, onMounted, ref, watch } from 'vue'
-import usePreferencesStore from './stores/preferences'
-import useConnectionStore from './stores/connections'
-import { darkThemeOverrides, themeOverrides } from '@/utils/theme'
+import ConnectionDialog from "./components/dialogs/ConnectionDialog.vue";
+import { h, onMounted, ref, watch } from "vue";
+import usePreferencesStore from "./stores/preferences";
+import useConnectionStore from "./stores/connections";
+import useTopicStore from "./stores/topics";
+import { darkThemeOverrides, themeOverrides } from "@/utils/theme";
 
-import AppContent from "./AppContent.vue"
+import AppContent from "./AppContent.vue";
 
-const initializing = ref(true)
+const initializing = ref(true);
 
-const prefStore = usePreferencesStore()
-const connectionStore = useConnectionStore()
+const prefStore = usePreferencesStore();
+const connectionStore = useConnectionStore();
+const topicStore = useTopicStore();
 
 onMounted(async () => {
-    try {
-        initializing.value = true
-        await connectionStore.initConnections()
-    } finally {
-        initializing.value = false
-    }
-})
+  try {
+    initializing.value = true;
+    await connectionStore.initConnections();
+    await topicStore.initTopics();
+  } finally {
+    initializing.value = false;
+  }
+});
 </script>
 <template>
   <n-config-provider
@@ -37,3 +40,6 @@ onMounted(async () => {
     </n-dialog-provider>
   </n-config-provider>
 </template>
+<style lang="scss">
+
+</style>

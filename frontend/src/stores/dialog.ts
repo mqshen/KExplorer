@@ -22,7 +22,15 @@ const useDialogStore = defineStore('dialog', {
         },
         closeConnDialog() {
             this.connDialogVisible = false
-        }
+        },
+
+        async openEditDialog(name) {
+            const connStore = useConnectionStore()
+            const profile = await connStore.getConnectionProfile(name)
+            this.connParam = connStore.mergeConnectionProfile(connStore.newDefaultConnection(name), profile)
+            this.connType = ConnDialogType.EDIT
+            this.connDialogVisible = true
+        },
     }
 })
 

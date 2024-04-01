@@ -3,13 +3,16 @@ import { get, size, find } from "lodash";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import useTabStore from "stores/tab";
+import useTopicStore from "stores/topics";
 const tabStore = useTabStore();
+const topicStore = useTopicStore();
 
 const props = defineProps({
   server: String,
 });
 
 const i18n = useI18n();
+
 const currentNode = computed(() => {
   const tab = find(tabStore.tabList, { name: props.server });
   console.log(tab);
@@ -20,12 +23,27 @@ const currentNode = computed(() => {
 });
 
 const options = [
-  { label: "Byte Array", value: "Byte" },
-  { label: "String", value: "String" },
-  { label: "Avro", value: "Avro" },
+  { label: "Byte Array", value: 0 },
+  { label: "String", value: 1 },
+  { label: "Avro", value: 2 },
 ];
 
-const updateTopicSerializator = () => {};
+const updateTopicSerializator = async () => {
+  const { topic, keySerializer, valueSerializer } = currentNode.value;
+  if (!topic) {
+    $message.error($t("message.empty_topic"));
+  }
+  const { success, msg } = await topicStore.saveTopic(props.server, topic, {
+    keySerializer: keySerializer,
+    valueSerializer: valueSerializer,
+  });
+  if (!success) {
+    $message.error(msg);
+    return;
+  }
+
+  $message.success(i18n.t("dialogue.handle_succ"));
+};
 </script>
 <template>
   <div class="properties-container flex-box-v">
@@ -39,7 +57,7 @@ const updateTopicSerializator = () => {};
     >
       <n-form-item :label="$t('interface.topic_name')" path="inputValue">
         <n-input
-          v-model:value="currentNode.label"
+          v-model:value="currentNode.topic"
           placeholder="Input"
           :disabled="true"
         />
@@ -55,13 +73,13 @@ const updateTopicSerializator = () => {};
     >
       <n-form-item :label="$t('interface.key')" path="inputValue">
         <n-select
-          v-model:value="currentNode.keySerializator"
+          v-model:value="currentNode.keySerializer"
           :options="options"
         />
       </n-form-item>
       <n-form-item :label="$t('interface.value')" path="inputValue">
         <n-select
-          v-model:value="currentNode.valueSerializator"
+          v-model:value="currentNode.valueSerializer"
           :options="options"
         />
       </n-form-item>

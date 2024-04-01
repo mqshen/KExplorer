@@ -159,7 +159,7 @@ onMounted(async () => {
                 :style="prefStore.generalFont"
                 class="flex-box-h flex-item-expand"
                 style="--wails-draggable: none">
-                <ribbon :value="tabStore.nav" :width="data.navMenuWidth" />
+                <ribbon v-model:value="tabStore.nav" :width="data.navMenuWidth" />
                 <!-- browser page -->
                 <div v-show="tabStore.nav === 'browser'" class="content-area flex-box-h flex-item-expand">
                     <resizeable-wrapper

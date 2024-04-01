@@ -23,6 +23,7 @@ var version = "0.0.0"
 
 func main() {
 	connSvc := services.Connection()
+	topicSvc := services.Topic()
 	browserSvc := services.Browser()
 	prefSvc := services.Preferences()
 
@@ -55,6 +56,7 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			//sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
+			topicSvc.Start(ctx)
 			browserSvc.Start(ctx)
 			//cliSvc.Start(ctx)
 			//monitorSvc.Start(ctx)
@@ -72,6 +74,7 @@ func main() {
 		Bind: []interface{}{
 			//sysSvc,
 			connSvc,
+			topicSvc,
 			browserSvc,
 			//cliSvc,
 			//monitorSvc,

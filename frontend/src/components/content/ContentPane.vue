@@ -4,7 +4,9 @@ import { useThemeVars } from 'naive-ui'
 import useTabStore from "stores/tab";
 import { BrowserTabType } from "@/consts/browser_tab_type";
 import Status from '@/components/icons/Status.vue'
+import Detail from '@/components/icons/Detail.vue'
 import ContentTopicProperties from '@/components/content_value/ContentTopicProperties.vue'
+import ContentTopicData from '@/components/content_value/ContentTopicData.vue'
 
 const themeVars = useThemeVars()
 const tabStore = useTabStore();
@@ -18,8 +20,6 @@ const selectedSubTab = computed(() => {
   const { subTab = "properties" } = tabStore.currentTab || {};
   return subTab;
 });
-
-
 
 </script>
 <template>
@@ -67,10 +67,67 @@ const selectedSubTab = computed(() => {
           </n-space>
         </template>
         <content-topic-properties
-          :pause="selectedSubTab !== BrowserTabType.Properties.toString()"
+          :server="props.server"
+        />
+      </n-tab-pane>
+      <n-tab-pane
+        :name="BrowserTabType.Data.toString()"
+        display-directive="show:lazy"
+      >
+        <template #tab>
+          <n-space
+            :size="5"
+            :wrap-item="false"
+            align="center"
+            inline
+            justify="center"
+          >
+            <n-icon size="16">
+              <detail
+                :inverse="
+                  selectedSubTab === BrowserTabType.Data.toString()
+                "
+                :stroke-color="themeVars.tabColor"
+                stroke-width="4"
+              />
+            </n-icon>
+            <span>{{ $t("interface.sub_tab.data") }}</span>
+          </n-space>
+        </template>
+        <content-topic-data
           :server="props.server"
         />
       </n-tab-pane>
     </n-tabs>
   </div>
 </template>
+
+
+<style lang="scss" scoped>
+@import '@/styles/content';
+
+.content-container {
+    //padding: 5px 5px 0;
+    //padding-top: 0;
+    box-sizing: border-box;
+    background-color: v-bind('themeVars.tabColor');
+}
+</style>
+
+<style lang="scss">
+.content-sub-tab {
+    background-color: v-bind('themeVars.tabColor');
+    height: 100%;
+}
+
+.content-sub-tab-pane {
+    padding: 0 !important;
+    height: 100%;
+    background-color: v-bind('themeVars.bodyColor');
+    overflow: hidden;
+}
+
+.n-tabs .n-tabs-bar {
+    transition: none !important;
+}
+</style>

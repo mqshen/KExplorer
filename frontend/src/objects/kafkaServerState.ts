@@ -14,7 +14,7 @@ export class KafkaServerState {
     name: string
     stats: Object
     loadingState: Object
-    nodeMap: Map<string, KafkaNodeItem> 
+    nodeMap: Map<string, KafkaNodeItem>
 
     /**
      * @param {string} name server name
@@ -48,14 +48,13 @@ export class KafkaServerState {
             replaceKey: 0,
         }
         const root = this.getRoot()
-        let nodes = brokers.map((broker) => new KafkaNodeItem({
+        let nodes = brokers.sort().map((broker) => new KafkaNodeItem({
             key: broker,
             label: broker,
             name: broker,
             type: nodeType,
             isLeaf: true,
         })
-
         )
         let node = new KafkaNodeItem({
             key: nodeKey,

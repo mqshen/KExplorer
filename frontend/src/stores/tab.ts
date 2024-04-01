@@ -1,6 +1,7 @@
 import { findIndex, isEmpty, set, get, find } from 'lodash'
 import { defineStore } from 'pinia'
 import { TabItem } from '@/objects/tabItem'
+import useTopicStore from "stores/topics";
 
 const useTabStore = defineStore('tab', {
     state: () => ({
@@ -41,6 +42,7 @@ const useTabStore = defineStore('tab', {
          * @private
          */
         _setActivatedIndex(idx, switchNav, subTab) {
+            console.log(idx, switchNav, subTab)
             this.activatedIndex = idx
             if (switchNav === true) {
                 this.nav = idx >= 0 ? 'browser' : 'server'
@@ -62,7 +64,6 @@ const useTabStore = defineStore('tab', {
         }) {
             let tabIndex = findIndex(this.tabList, { name: server })
             if (tabIndex === -1) {
-                console.log("skskskksks", server)
                 const tabItem = new TabItem(server, server)
                 this.tabList.push(tabItem)
                 tabIndex = this.tabList.length - 1
@@ -107,8 +108,32 @@ const useTabStore = defineStore('tab', {
                 } else {
                     tab.selectedKeys = keys
                 }
-                tab.currentNode.label = node.label
+                const topic = node.label
+                tab.currentNode.topic = topic
+                const topicStore = useTopicStore()
+                console.log(topicStore.topics)
+                let topicConfig = topicStore.topics.get(`${server}_${topic}`)
+                if (topicConfig != null) {
+                    tab.currentNode.keySerializer = topicConfig.keySerializer
+                    tab.currentNode.valueSerializer = topicConfig.valueSerializer
+                } else {
+                    tab.currentNode.keySerializer = 0
+                    tab.currentNode.valueSerializer = 0
+                }
             }
+        },
+
+        switchTab(tabIndex) {
+            // const len = size(this.tabList)
+            // if (tabIndex < 0 || tabIndex >= len) {
+            //     tabIndex = 0
+            // }
+            // this.activatedIndex = tabIndex
+            // const tabIndex = findIndex(this.tabList, {name})
+            // if (tabIndex === -1) {
+            //     return
+            // }
+            // this.activatedIndex = tabIndex
         },
         switchSubTab(name) {
             const tab = this.currentTab
@@ -116,6 +141,16 @@ const useTabStore = defineStore('tab', {
                 return
             }
             tab.subTab = name
+        },
+        /**
+         *
+         * @param {string} tabName
+         */
+        removeTabByName(tabName) {
+            const idx = findIndex(this.tabs, { name: tabName })
+            if (idx !== -1) {
+                this.removeTab(idx)
+            }
         },
     }
 })

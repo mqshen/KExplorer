@@ -2,7 +2,9 @@
   "name": "English",
   "common": {
     "confirm": "Confirm",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "warning": "Warning",
+    "save": "Save"
   },
   "interface": {
     "new_conn": "Add Connection",
@@ -14,8 +16,12 @@
     "key": "Key",
     "value": "Value",
     "update": "Update",
+    "oldest": "Oldest",
+    "newest": "Newest",
+    "copy_value": "Copy",
     "sub_tab": {
-      "properties": "properties"
+      "properties": "properties",
+      "data": "data"
     }
   },
   "menu": {
@@ -32,6 +38,10 @@
     "github": "Github"
   },
   "dialogue": {
+    "close_confirm": "Close this connection ({name})?",
+    "edit_close_confirm": "Please close relevant connections before editing. Continue?",
+    "remove_tip": "{type} \"{name}\" will be deleted",
+    "handle_succ": "Success!",
     "connection": {
       "new_title": "New Connection",
       "edit_title": "Edit Connection",
@@ -44,6 +54,14 @@
       "illegal_characters": "Contains illegal characters",
       "test": "Test Connection",
       "parse_url_clipboard": "Parse URL from Clipboard"
+    }
+  },
+  "message": {
+    "empty_topic": "please select a topic"
+  },
+  "preferences": {
+    "general": {
+      "update": "Update"
     }
   }
 }

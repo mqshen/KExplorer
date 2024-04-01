@@ -22,8 +22,9 @@ type cmdHistoryItem struct {
 }
 
 type connectionService struct {
-	ctx   context.Context
-	conns *ConnectionsStorage
+	ctx          context.Context
+	conns        *ConnectionsStorage
+	topicService *topicService
 }
 
 var connection *connectionService
@@ -33,7 +34,8 @@ func Connection() *connectionService {
 	if connection == nil {
 		onceConnection.Do(func() {
 			connection = &connectionService{
-				conns: NewConnections(),
+				conns:        NewConnections(),
+				topicService: Topic(),
 			}
 		})
 	}
@@ -115,4 +117,24 @@ func (c *connectionService) ListConnection() (resp types.JSResp) {
 
 func (c *connectionService) getConnection(name string) *types.Connection {
 	return c.conns.GetConnection(name)
+}
+
+// GetConnection get connection profile by name
+func (c *connectionService) GetConnection(name string) (resp types.JSResp) {
+	conn := c.getConnection(name)
+	resp.Success = conn != nil
+	resp.Data = conn
+	return
+}
+
+// DeleteConnection remove connection by name
+func (c *connectionService) DeleteConnection(name string) (resp types.JSResp) {
+	err := c.conns.DeleteConnection(name)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	c.topicService.DeleteByServer(name)
+	resp.Success = true
+	return
 }

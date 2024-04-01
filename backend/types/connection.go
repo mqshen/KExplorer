@@ -9,16 +9,10 @@ type ConnectionConfig struct {
 	Root      string `json:"root,omitempty" yaml:"root,omitempty"`
 }
 
-type TopicConfig struct {
-	KeySerialization   string `json:"keySerialization" yaml:"keySerialization"`
-	ValueSerialization string `json:"valueSerialization" yaml:"valueSerialization"`
-}
-
 type Connection struct {
 	ConnectionConfig `json:",inline" yaml:",inline"`
-	Type             string                  `json:"type,omitempty" yaml:"type,omitempty"`
-	Topics           map[string]*TopicConfig `json:"topics" yaml:"topics"`
-	Connections      []Connection            `json:"connections,omitempty" yaml:"connections,omitempty"`
+	Type             string       `json:"type,omitempty" yaml:"type,omitempty"`
+	Connections      []Connection `json:"connections,omitempty" yaml:"connections,omitempty"`
 }
 
 type Connections []Connection

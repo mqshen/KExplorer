@@ -4,4 +4,5 @@
  */
 export const BrowserTabType = {
     Properties: 'properties',
+    Data: 'data',
 }
