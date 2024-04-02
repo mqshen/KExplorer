@@ -193,7 +193,12 @@ body {
   }
 }
 
-
-.n-tree .n-tree-node-switcher.n-tree-node-switcher--hide {
+.browser-tree-wrapper .n-tree .n-tree-node-switcher.n-tree-node-switcher--hide {
   display: none;
+}
+
+.table-kafka-value {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }

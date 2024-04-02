@@ -56,12 +56,13 @@ const columns = [
     title: "Value",
     key: "value",
     titleAlign: "center",
-    render: ({ value }, index) => {
-      if (value.length > 64) {
-        return value.substring(0, 64) + "...";
-      }
-      return value;
-    },
+    className: "table-kafka-value",
+    // render: ({ value }, index) => {
+    //   if (value.length > 64) {
+    //     return value.substring(0, 64) + "...";
+    //   }
+    //   return value;
+    // },
   },
   {
     title: "Timestamp",
@@ -94,20 +95,20 @@ const fetchMessages = () => {
   }
 };
 const asideWidth = ref(500);
-const messageContent = ref(null)
+const messageContent = ref(null);
 const rowProps = (row) => {
   return {
     style: "cursor: pointer;",
     onClick: () => {
-      messageContent.value = row.value
+      messageContent.value = row.value;
     },
   };
 };
 </script>
 <template>
-  <div class="content-wrapper flex-box-v message-container">
-    <n-row :gutter="[0, 24]">
-      <n-col :span="2"> </n-col>
+  <div class="flex-box-v message-container">
+    <n-row  class="title-bar">
+      <n-col :span="1"> </n-col>
       <n-col :span="6">
         <div style="display: flex" class="button-group">
           <n-button strong secondary circle @click="fetchMessages">
@@ -122,7 +123,7 @@ const rowProps = (row) => {
           </n-button>
         </div>
       </n-col>
-      <n-col :span="6"> </n-col>
+      <n-col :span="7"> </n-col>
       <n-col :span="9">
         <div style="display: flex; justify-content: flex-end">
           <span class="input-label">{{ $t("interface.message") }}</span>
@@ -140,13 +141,15 @@ const rowProps = (row) => {
         :max-height="420"
       />
     </vertical-resizeable-wrapper>
-    <content-value-string 
-        :value="messageContent"> </content-value-string>
+    <content-value-string :value="messageContent"> </content-value-string>
   </div>
 </template>
 <style lang="scss" scoped>
+.title-bar {
+  padding: 5px 0 0;
+}
 .n-data-table {
-  margin-top: 10px;
+  margin-top: 5px;
 }
 .input-label {
   line-height: 32px;

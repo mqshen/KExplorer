@@ -222,7 +222,7 @@ func (b *browserService) getZkClient(server string) (item *connectionItem, err e
 		client:     client,
 		ctx:        ctx,
 		cancelFunc: cancelFunc,
-		root:       "/", //connConfig.Root,
+		root:       connConfig.Root,
 	}
 	if item.stepSize <= 0 {
 		item.stepSize = consts.DEFAULT_LOAD_SIZE

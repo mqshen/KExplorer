@@ -53,7 +53,12 @@
       "name_tip": "Connection name",
       "illegal_characters": "Contains illegal characters",
       "test": "Test Connection",
-      "parse_url_clipboard": "Parse URL from Clipboard"
+      "parse_url_clipboard": "Parse URL from Clipboard",
+      "bootstrap_server": "Bootstrap Server",
+      "bootstrap_tip": "Kafka Bootstrap Server",
+      "chroot_path": "Chroot Path",
+      "bootstrap": "Bootstrap Type",
+      "security": "Security"
     }
   },
   "message": {

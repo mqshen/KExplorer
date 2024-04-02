@@ -116,6 +116,8 @@ watch(
     }
   }
 );
+
+const bootstrapType = ref(0);
 </script>
 <template>
   <n-modal
@@ -136,7 +138,7 @@ watch(
   >
     <n-spin :show="closingConnection">
       <n-tabs
-        :value="tab"
+        v-model:value="tab"
         animated
         pane-style="min-height: 50vh;"
         placement="left"
@@ -155,33 +157,45 @@ watch(
             :show-require-mark="false"
             label-placement="top"
           >
-            <n-grid :x-gap="10">
-              <n-form-item-gi
-                :label="$t('dialogue.connection.conn_name')"
-                :span="24"
-                path="name"
-                required
-              >
-                <n-input
-                  v-model:value="generalForm.name"
-                  :placeholder="$t('dialogue.connection.name_tip')"
-                />
-              </n-form-item-gi>
-              <n-form-item-gi
-                v-if="!isEditMode"
-                :label="$t('dialogue.connection.group')"
-                :span="24"
-                required
-              >
-                <n-select
-                  v-model:value="generalForm.group"
-                  :options="groupOptions"
-                  :render-label="
-                    ({ label, value }) => (value === '' ? $t(label) : label)
-                  "
-                />
-              </n-form-item-gi>
-              <n-form-item-gi
+            <n-form-item
+              :label="$t('dialogue.connection.conn_name')"
+              :span="24"
+              path="name"
+              required
+            >
+              <n-input
+                v-model:value="generalForm.name"
+                :placeholder="$t('dialogue.connection.name_tip')"
+              />
+            </n-form-item>
+
+            <n-form-item
+              v-if="!isEditMode"
+              :label="$t('dialogue.connection.group')"
+              :span="24"
+              required
+            >
+              <n-select
+                v-model:value="generalForm.group"
+                :options="groupOptions"
+                :render-label="
+                  ({ label, value }) => (value === '' ? $t(label) : label)
+                "
+              />
+            </n-form-item>
+            <n-form-item
+              :label="$t('dialogue.connection.bootstrap')"
+              path="radioGroupValue"
+            >
+              <n-radio-group v-model:value="bootstrapType" name="BootstrapType">
+                <n-space>
+                  <n-radio :value="0"> Zookeeper </n-radio>
+                  <n-radio :value="1"> Kafka Bootstrap Servers </n-radio>
+                </n-space>
+              </n-radio-group>
+            </n-form-item>
+            <template v-if="bootstrapType == 0">
+              <n-form-item
                 :label="$t('dialogue.connection.addr')"
                 :span="24"
                 path="addr"
@@ -202,9 +216,39 @@ watch(
                     style="width: 200px"
                   />
                 </n-input-group>
-              </n-form-item-gi>
-            </n-grid>
+              </n-form-item>
+              <n-form-item
+                :label="$t('dialogue.connection.chroot_path')"
+                :span="24"
+                path="root"
+                required
+              >
+                <n-input
+                  v-model:value="generalForm.root"
+                  :placeholder="$t('dialogue.connection.root_tip')"
+                />
+              </n-form-item>
+            </template>
+            <template v-else>
+              <n-form-item
+                :label="$t('dialogue.connection.bootstrap_server')"
+                :span="24"
+                path="bootstrap"
+                required
+              >
+                <n-input
+                  v-model:value="generalForm.bootstrap"
+                  placeholder="localhost:9092"
+                />
+              </n-form-item>
+            </template>
           </n-form>
+        </n-tab-pane>
+        <n-tab-pane
+          :tab="$t('dialogue.connection.security')"
+          display-directive="show:lazy"
+          name="security"
+        >
         </n-tab-pane>
       </n-tabs>
     </n-spin>
