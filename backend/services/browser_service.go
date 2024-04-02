@@ -12,6 +12,7 @@ import (
 	"kafkaexplorer/backend/types"
 	"math"
 	"sort"
+	"strings"
 	"sync"
 )
 
@@ -107,7 +108,7 @@ func (b *browserService) GetKafkaMetaData(server string) (resp types.JSResp) {
 		return
 	}
 
-	kafkaClient, err := b.getKafkaClient(server, brokers[0])
+	kafkaClient, err := b.getKafkaClient(server, brokers)
 	if err != nil {
 		resp.Msg = err.Error()
 		return
@@ -233,7 +234,7 @@ func (b *browserService) getZkClient(server string) (item *connectionItem, err e
 
 // get a redis client from local cache or create a new open
 // if db >= 0, will also switch to db index
-func (b *browserService) getKafkaClient(server string, broker types.Broker) (client *kafka.AdminClient, err error) {
+func (b *browserService) getKafkaClient(server string, brokers []types.Broker) (client *kafka.AdminClient, err error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -244,8 +245,8 @@ func (b *browserService) getKafkaClient(server string, broker types.Broker) (cli
 		return
 	}
 	var connConfig = selConn.ConnectionConfig
+	connConfig.Bootstrap = generateBootstrapServer(brokers)
 
-	connConfig.Bootstrap = fmt.Sprintf("%s:%d", broker.Host, broker.Port)
 	runtime.LogInfo(b.ctx, fmt.Sprintf("connect to kafka %s", connConfig.Bootstrap))
 	client, err = b.createKafkaClient(connConfig)
 	if err != nil {
@@ -281,8 +282,7 @@ type KafkaMessage struct {
 }
 
 func (b *browserService) fetchOldestMessages(item *connectionItem, topic string, param types.FetchRequest) []KafkaMessage {
-	broker := item.brokers[0]
-	bootstrap := fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	bootstrap := generateBootstrapServer(item.brokers)
 	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": bootstrap})
 	if err != nil {
 		runtime.LogErrorf(b.ctx, fmt.Sprintf("Failed to create Admin client: %s\n", err))
@@ -301,9 +301,7 @@ func (b *browserService) fetchOldestMessages(item *connectionItem, topic string,
 }
 
 func (b *browserService) fetchMessages(item *connectionItem, topic string, positions []kafka.TopicPartition, needSeek bool, totalSize int, param types.FetchRequest) []KafkaMessage {
-
-	broker := item.brokers[0]
-	bootstrap := fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	bootstrap := generateBootstrapServer(item.brokers)
 	runtime.LogInfo(b.ctx, fmt.Sprintf("start connect to broker %s position: %v", bootstrap, positions))
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
@@ -383,8 +381,7 @@ func (b *browserService) fetchMessages(item *connectionItem, topic string, posit
 }
 
 func (b *browserService) fetchNewestMessages(item *connectionItem, topic string, param types.FetchRequest) []KafkaMessage {
-	broker := item.brokers[0]
-	bootstrap := fmt.Sprintf("%s:%d", broker.Host, broker.Port)
+	bootstrap := generateBootstrapServer(item.brokers)
 	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": bootstrap})
 	if err != nil {
 		runtime.LogErrorf(b.ctx, fmt.Sprintf("Failed to create Admin client: %s\n", err))
@@ -445,4 +442,12 @@ func (b *browserService) FetchMessages(server string, topic string, param types.
 		resp.Msg = fmt.Sprintf("can not find connection for server %s topic %s", server, topic)
 	}
 	return
+}
+
+func generateBootstrapServer(brokers []types.Broker) string {
+	var bootstrap []string
+	for _, broker := range brokers {
+		bootstrap = append(bootstrap, fmt.Sprintf("%s:%d", broker.Host, broker.Port))
+	}
+	return strings.Join(bootstrap, ";")
 }
