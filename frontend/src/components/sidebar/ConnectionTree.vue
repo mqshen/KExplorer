@@ -105,10 +105,7 @@ const openConnection = async (name) => {
     }
     // check if connection already canceled before finish open
     if (!isEmpty(connectingServer.value)) {
-      tabStore.upsertTab({
-        server: name,
-        // db: browserStore.getSelectedDB(name),
-      });
+      tabStore.upsertTab(name);
     }
   } catch (e) {
     $message.error(e.message);

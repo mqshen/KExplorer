@@ -28,6 +28,7 @@ const currentNode = computed(() => {
 });
 
 const messageOrder = ref(0);
+const loading = ref(false)
 
 const options = [
   { label: i18n.t("interface.oldest"), value: 0 },
@@ -74,8 +75,8 @@ const columns = [
 const kafkaMessages = ref([]);
 
 const fetchMessages = () => {
+  loading.value = true;
   const tab = find(tabStore.tabList, { name: props.server });
-  console.log(tab);
   if (tab != null) {
     const currentNode = tab.currentNode;
     const { topic, keySerializer, valueSerializer } = currentNode;
@@ -91,6 +92,8 @@ const fetchMessages = () => {
         console.log(messages);
         kafkaMessages.value = messages;
       }
+    }).finally(() => {
+      loading.value = false;
     });
   }
 };
@@ -139,6 +142,7 @@ const rowProps = (row) => {
         :bordered="true"
         :row-props="rowProps"
         :max-height="420"
+        :loading="loading"
       />
     </vertical-resizeable-wrapper>
     <content-value-string :value="messageContent"> </content-value-string>

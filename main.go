@@ -5,6 +5,7 @@ import (
 	"embed"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"kafkaexplorer/backend/services"
 	"runtime"
 
@@ -22,6 +23,8 @@ var icon []byte
 var version = "0.0.0"
 
 func main() {
+	// Create an instance of the app structure
+	sysSvc := services.System()
 	connSvc := services.Connection()
 	topicSvc := services.Topic()
 	browserSvc := services.Browser()
@@ -54,7 +57,7 @@ func main() {
 		Frameless:        runtime.GOOS != "darwin",
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup: func(ctx context.Context) {
-			//sysSvc.Start(ctx, version)
+			sysSvc.Start(ctx, version)
 			connSvc.Start(ctx)
 			topicSvc.Start(ctx)
 			browserSvc.Start(ctx)
@@ -65,6 +68,16 @@ func main() {
 			//services.GA().SetSecretKey(gaMeasurementID, gaSecretKey)
 			//services.GA().Startup(version)
 		},
+		OnDomReady: func(ctx context.Context) {
+			x, y := prefSvc.GetWindowPosition(ctx)
+			wailsRuntime.WindowSetPosition(ctx, x, y)
+			wailsRuntime.WindowShow(ctx)
+		},
+		OnBeforeClose: func(ctx context.Context) (prevent bool) {
+			x, y := wailsRuntime.WindowGetPosition(ctx)
+			prefSvc.SaveWindowPosition(x, y)
+			return false
+		},
 		OnShutdown: func(ctx context.Context) {
 			browserSvc.Stop()
 			//cliSvc.CloseAll()
@@ -72,7 +85,7 @@ func main() {
 			//pubsubSvc.StopAll()
 		},
 		Bind: []interface{}{
-			//sysSvc,
+			sysSvc,
 			connSvc,
 			topicSvc,
 			browserSvc,
