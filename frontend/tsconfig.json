@@ -6,7 +6,8 @@
     "cypress.config.*",
     "nightwatch.conf.*",
     "playwright.config.*",
-    "src/**/*"
+    "src/**/*",
+    "wailsjs/**/*",
   ],
   "compilerOptions": {
     "composite": true,

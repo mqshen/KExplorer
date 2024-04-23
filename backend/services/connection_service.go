@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-zookeeper/zk"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	. "kafkaexplorer/backend/storage"
 	"kafkaexplorer/backend/types"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -64,13 +64,10 @@ func (c *connectionService) createKafkaClient(config types.ConnectionConfig) (*k
 		"allow.auto.create.topics": "false"}
 	adminClient, err := kafka.NewAdminClient(&conf)
 	if err != nil {
-		log.Println("Failed to create AdminClient: %s\n", err)
+		runtime.LogErrorf(c.ctx, "Failed to create AdminClient: %s\n", err)
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	return adminClient, nil
 }
 

@@ -1,9 +1,9 @@
 import { createI18n } from 'vue-i18n'
-import { lang } from '@/langs/index.ts'
+import { lang } from '@/langs/index'
 
 export const i18n = createI18n({
-    locale: 'en-us',
-    fallbackLocale: 'en-us',
+    locale: 'en',
+    fallbackLocale: 'en',
     globalInjection: true,
     legacy: false,
     messages: {

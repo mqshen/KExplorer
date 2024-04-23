@@ -19,6 +19,10 @@
     "oldest": "Oldest",
     "newest": "Newest",
     "copy_value": "Copy",
+    "open_connection": "Open Connection",
+    "dup_conn": "Duplicate Connection",
+    "edit_conn": "Edit Connection",
+    "remove_conn": "Remove Connection",
     "sub_tab": {
       "properties": "properties",
       "data": "data"
@@ -42,7 +46,7 @@
     "edit_close_confirm": "Please close relevant connections before editing. Continue?",
     "remove_tip": "{type} \"{name}\" will be deleted",
     "handle_succ": "Success!",
-    "connection": {
+    "cluster": {
       "new_title": "New Connection",
       "edit_title": "Edit Connection",
       "general": "General",

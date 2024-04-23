@@ -3,7 +3,7 @@ import { get, map } from 'lodash'
 import useTabStore from 'stores/tab'
 import useBrowserStore from 'stores/browser'
 import usePreferencesStore from 'stores/preferences'
-import useConnectionStore from 'stores/connections'
+import useClusterStore from 'stores/cluster'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeVars } from 'naive-ui'
@@ -12,7 +12,7 @@ import { extraTheme } from '@/utils/extra_theme'
 const themeVars = useThemeVars()
 const i18n = useI18n()
 const tabStore = useTabStore()
-const connectionStore = useConnectionStore()
+const clusterStore = useClusterStore()
 const browserStore = useBrowserStore()
 const prefStore = usePreferencesStore()
 
@@ -27,7 +27,7 @@ const onCloseTab = (tabIndex) => {
 
 const tabMarkColor = computed(() => {
     const { name } = tabStore?.currentTab || {}
-    const { markColor = '' } = connectionStore.serverProfile[name] || {}
+    const { markColor = '' } = clusterStore.clusterProfile[name] || {}
     return markColor
 })
 

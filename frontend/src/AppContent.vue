@@ -7,7 +7,7 @@ import useTabStore from './stores/tab.ts'
 import { useThemeVars } from 'naive-ui'
 import BrowserPane from './components/sidebar/BrowserPane.vue'
 import Ribbon from './components/sidebar/Ribbon.vue'
-import ConnectionPane from './components/sidebar/ConnectionPane.vue'
+import ClusterPane from './components/sidebar/ClusterPane.vue'
 import ContentServerPane from './components/content/ContentServerPane.vue'
 import ToolbarControlWidget from '@/components/common/ToolbarControlWidget.vue'
 import ResizeableWrapper from '@/components/common/ResizeableWrapper.vue'
@@ -192,7 +192,7 @@ onMounted(async () => {
                         :offset="data.navMenuWidth"
                         class="flex-item"
                         @update:size="handleResize">
-                        <connection-pane class="app-side flex-item-expand" />
+                        <cluster-pane class="app-side flex-item-expand" />
                     </resizeable-wrapper>
                     <content-server-pane class="flex-item-expand" />
                 </div>

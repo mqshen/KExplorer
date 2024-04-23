@@ -3,7 +3,7 @@ import { includes, isEmpty, get, size } from "lodash";
 import { computed, reactive, ref, h } from "vue";
 import { NIcon, NSpace, NText, useThemeVars } from "naive-ui";
 import { useI18n } from "vue-i18n";
-import useConnectionStore from "stores/connections";
+import useClusterStore from "stores/cluster";
 import useBrowserStore from "stores/browser";
 import useTabStore from "stores/tab";
 import { parseHexColor } from "@/utils/rgb";
@@ -24,7 +24,7 @@ const props = defineProps({
 });
 
 const i18n = useI18n();
-const connectionStore = useConnectionStore();
+const clusterStore = useClusterStore();
 const browserStore = useBrowserStore();
 const tabStore = useTabStore();
 
@@ -32,7 +32,7 @@ const treeKey = ref(0);
 
 const backgroundColor = computed(() => {
   const { markColor: hex = "" } =
-    connectionStore.serverProfile[props.server] || {};
+  clusterStore.clusterProfile[props.server] || {};
   if (isEmpty(hex)) {
     return "";
   }

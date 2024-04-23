@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import ConnectionTree from './ConnectionTree.vue'
+import ConnectionTree from './ClusterTree.vue'
 
 const filterPattern = ref('')
 </script>

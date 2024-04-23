@@ -68,7 +68,7 @@ func (b *browserService) Stop() {
 // OpenConnection open redis server connection
 func (b *browserService) OpenConnection(name string) (resp types.JSResp) {
 	// get connection config
-	selConn := Connection().getConnection(name)
+	selConn := ClusterServiceInstance().GetCluster(name)
 
 	resp.Success = true
 	resp.Data = map[string]any{

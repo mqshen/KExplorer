@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import useConnectionStore from './connections.ts'
+import useClusterStore from './cluster.ts'
 
 /**
  * connection dialog type
@@ -24,8 +24,8 @@ const useDialogStore = defineStore('dialog', {
             this.connDialogVisible = false
         },
 
-        async openEditDialog(name) {
-            const connStore = useConnectionStore()
+        async openEditDialog(name: string) {
+            const connStore = useClusterStore()
             const profile = await connStore.getConnectionProfile(name)
             this.connParam = connStore.mergeConnectionProfile(connStore.newDefaultConnection(name), profile)
             this.connType = ConnDialogType.EDIT

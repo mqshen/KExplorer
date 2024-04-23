@@ -7,7 +7,7 @@ import { NodeType } from "@/consts/kafka_node_type"
 
 const useBrowserStore = defineStore('browser', {
     state: () => ({
-        servers: {},
+        servers: new Map<string, KafkaServerState>(),
     }),
     actions: {
         /**
@@ -15,7 +15,7 @@ const useBrowserStore = defineStore('browser', {
              * @param name
              * @returns {boolean}
              */
-        isConnected(name) {
+        isConnected(name: string) {
             return this.servers.hasOwnProperty(name)
         },
         /**
@@ -24,7 +24,7 @@ const useBrowserStore = defineStore('browser', {
          * @param {boolean} [reload]
          * @returns {Promise<void>}
          */
-        async openConnection(name, reload) {
+        async openConnection(name: string, reload: boolean = false) {
             if (this.isConnected(name)) {
                 if (reload !== true) {
                     return
@@ -41,20 +41,20 @@ const useBrowserStore = defineStore('browser', {
             const serverInst = new KafkaServerState({
                 name,
             })
-            this.servers[name] = serverInst
+            this.servers.set(name, serverInst)
         },
         /**
          * close connection
          * @param {string} name
          * @returns {Promise<boolean>}
          */
-        async closeConnection(name) {
+        async closeConnection(name: string) {
             const { success, msg } = await CloseConnection(name)
             if (!success) {
                 // throw new Error(msg)
                 return false
             }
-            delete this.servers[name]
+            this.servers.delete(name)
 
             const tabStore = useTabStore()
             tabStore.removeTabByName(name)

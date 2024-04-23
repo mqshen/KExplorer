@@ -10,21 +10,24 @@ import Connect from "@/components/icons/Connect.vue";
 import Config from "@/components/icons/Config.vue";
 import Delete from "@/components/icons/Delete.vue";
 import Unlink from "@/components/icons/Unlink.vue";
+import CopyLink from '@/components/icons/CopyLink.vue'
 import IconButton from "@/components/common/IconButton.vue";
-import { ConnectionType } from "@/consts/connection_type";
-import useConnectionStore from "stores/connections";
+import { ClusterType } from "@/consts/cluster_type";
+import useClusterStore from "stores/cluster";
 import usePreferencesStore from "stores/preferences";
 import useBrowserStore from "stores/browser";
 import useTabStore from "stores/tab";
-import useDialogStore from 'stores/dialog'
+import useDialogStore from "stores/dialog";
+import { useRender } from '@/utils/render'
 
 const i18n = useI18n();
+const render = useRender()
 
 const prefStore = usePreferencesStore();
-const connectionStore = useConnectionStore();
+const clusterStore = useClusterStore();
 const browserStore = useBrowserStore();
 const tabStore = useTabStore();
-const dialogStore = useDialogStore()
+const dialogStore = useDialogStore();
 
 const expandedKeys = ref([]);
 const selectedKeys = ref([]);
@@ -43,13 +46,85 @@ const contextMenuParam = reactive({
   currentNode: null,
 });
 
+const menuOptions = {
+    [ClusterType.Group]: ({ opened }) => [
+        {
+            key: 'group_rename',
+            label: 'interface.rename_conn_group',
+            icon: Edit,
+        },
+        {
+            key: 'group_delete',
+            label: 'interface.remove_conn_group',
+            icon: Delete,
+        },
+    ],
+    [ClusterType.Server]: ({ name }) => {
+        const connected = browserStore.isConnected(name)
+        if (connected) {
+            return [
+                {
+                    key: 'server_close',
+                    label: 'interface.disconnect',
+                    icon: Unlink,
+                },
+                {
+                    key: 'server_edit',
+                    label: 'interface.edit_conn',
+                    icon: Config,
+                },
+                {
+                    key: 'server_dup',
+                    label: 'interface.dup_conn',
+                    icon: CopyLink,
+                },
+                {
+                    type: 'divider',
+                    key: 'd1',
+                },
+                {
+                    key: 'server_remove',
+                    label: 'interface.remove_conn',
+                    icon: Delete,
+                },
+            ]
+        } else {
+            return [
+                {
+                    key: 'server_open',
+                    label: 'interface.open_connection',
+                    icon: Connect,
+                },
+                {
+                    key: 'server_edit',
+                    label: 'interface.edit_conn',
+                    icon: Config,
+                },
+                {
+                    key: 'server_dup',
+                    label: 'interface.dup_conn',
+                    icon: CopyLink,
+                },
+                {
+                    type: 'divider',
+                    key: 'd1',
+                },
+                {
+                    key: 'server_remove',
+                    label: 'interface.remove_conn',
+                    icon: Delete,
+                },
+            ]
+        }
+    },
+}
 /**
  * get mark color of server saved in preferences
  * @param name
  * @return {null|string}
  */
 const getServerMarkColor = (name) => {
-  const { markColor = "" } = connectionStore.serverProfile[name] || {};
+  const { markColor = "" } = clusterStore.clusterProfile[name] || {};
   if (!isEmpty(markColor)) {
     const rgb = parseHexColor(markColor);
     const rgb2 = hexGammaCorrection(rgb, 0.75);
@@ -60,36 +135,20 @@ const getServerMarkColor = (name) => {
 
 const renderPrefix = ({ option }) => {
   const iconTransparency = prefStore.isDark ? 0.75 : 1;
-  switch (option.type) {
-    case ConnectionType.Group:
-      const opened = indexOf(expandedKeys.value, option.key) !== -1;
-      return h(
-        NIcon,
-        { size: 20 },
-        {
-          default: () =>
-            h(Folder, {
-              open: opened,
-              fillColor: `rgba(255,206,120,${iconTransparency})`,
-            }),
-        }
-      );
-    case ConnectionType.Server:
-      const connected = browserStore.isConnected(option.name);
-      const color = getServerMarkColor(option.name);
-      const icon = option.cluster === true ? Cluster : Server;
-      return h(
-        NIcon,
-        { size: 20, color: !!!connected ? color : "#dc423c" },
-        {
-          default: () =>
-            h(icon, {
-              inverse: !!connected,
-              fillColor: `rgba(220,66,60,${iconTransparency})`,
-            }),
-        }
-      );
-  }
+  const connected = browserStore.isConnected(option.name);
+  const color = getServerMarkColor(option.name);
+  const icon = option.cluster === true ? Cluster : Server;
+  return h(
+    NIcon,
+    { size: 20, color: !!!connected ? color : "#dc423c" },
+    {
+      default: () =>
+        h(icon, {
+          inverse: !!connected,
+          fillColor: `rgba(220,66,60,${iconTransparency})`,
+        }),
+    }
+  );
 };
 
 /**
@@ -125,16 +184,11 @@ const onCancelOpen = () => {
 const nodeProps = ({ option }) => {
   return {
     onDblclick: async () => {
-      if (option.type === ConnectionType.Server) {
-        openConnection(option.name).then(() => {});
-      } else if (option.type === ConnectionType.Group) {
-        // toggle expand
-        nextTick().then(() => expandKey(option.key));
-      }
+      openConnection(option.name).then(() => {});
     },
     onContextmenu(e) {
       e.preventDefault();
-      const mop = menuOptions[option.type];
+      const mop = menuOptions[ClusterType.Server];
       if (mop == null) {
         return;
       }
@@ -145,7 +199,7 @@ const nodeProps = ({ option }) => {
         contextMenuParam.x = e.clientX;
         contextMenuParam.y = e.clientY;
         contextMenuParam.show = true;
-        selectedKeys.value = [option.key];
+        selectedKeys.value = [option.name];
       });
     },
   };
@@ -154,22 +208,20 @@ const nodeProps = ({ option }) => {
 const handleDrop = ({ node, dragNode, dropPosition }) => {};
 
 const renderLabel = ({ option }) => {
-  if (option.type === ConnectionType.Server) {
-    const color = getServerMarkColor(option.name);
-    if (color != null) {
-      return h(
-        NText,
-        {
-          style: {
-            color,
-            fontWeight: "450",
-          },
+  const color = getServerMarkColor(option.name);
+  if (color != null) {
+    return h(
+      NText,
+      {
+        style: {
+          color,
+          fontWeight: "450",
         },
-        () => option.label
-      );
-    }
+      },
+      () => option.name
+    );
   }
-  return option.label;
+  return option.name;
 };
 
 const connectingServer = ref("");
@@ -181,7 +233,7 @@ const removeConnection = (name) => {
       name,
     }),
     async () => {
-      connectionStore.deleteConnection(name).then(({ success, msg }) => {
+      clusterStore.deleteCluster(name).then(({ success, msg }) => {
         if (!success) {
           $message.error(msg);
         }
@@ -229,6 +281,7 @@ const onUpdateExpandedKeys = (keys, option) => {
 };
 
 const onUpdateSelectedKeys = (keys, option) => {
+  console.log(keys)
   selectedKeys.value = keys;
 };
 
@@ -286,14 +339,9 @@ const getServerMenu = (connected) => {
 };
 
 const renderSuffix = ({ option }) => {
-  if (includes(selectedKeys.value, option.key)) {
-    switch (option.type) {
-      case ConnectionType.Server:
-        const connected = browserStore.isConnected(option.name);
-        return renderIconMenu(getServerMenu(connected));
-      case ConnectionType.Group:
-        return renderIconMenu(getGroupMenu());
-    }
+  if (includes(selectedKeys.value, option.name)) {
+    const connected = browserStore.isConnected(option.name);
+    return renderIconMenu(getServerMenu(connected));
   }
   return null;
 };
@@ -305,7 +353,7 @@ const renderSuffix = ({ option }) => {
     @keydown.esc="contextMenuParam.show = false"
   >
     <n-empty
-      v-if="isEmpty(connectionStore.connections)"
+      v-if="isEmpty(clusterStore.clusters)"
       :description="$t('interface.empty_server_list')"
       class="empty-content"
     />
@@ -315,7 +363,7 @@ const renderSuffix = ({ option }) => {
       :block-line="true"
       :block-node="true"
       :cancelable="false"
-      :data="connectionStore.connections"
+      :data="clusterStore.clusters"
       :draggable="true"
       :expanded-keys="expandedKeys"
       :node-props="nodeProps"

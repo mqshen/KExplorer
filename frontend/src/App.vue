@@ -2,7 +2,7 @@
 import ConnectionDialog from "./components/dialogs/ConnectionDialog.vue";
 import { h, onMounted, ref, watch } from "vue";
 import usePreferencesStore from "./stores/preferences";
-import useConnectionStore from "./stores/connections";
+import useClusterStore from "./stores/cluster";
 import useTopicStore from "./stores/topics";
 import { darkThemeOverrides, themeOverrides } from "@/utils/theme";
 
@@ -11,13 +11,13 @@ import AppContent from "./AppContent.vue";
 const initializing = ref(true);
 
 const prefStore = usePreferencesStore();
-const connectionStore = useConnectionStore();
+const clusterStore = useClusterStore();
 const topicStore = useTopicStore();
 
 onMounted(async () => {
   try {
     initializing.value = true;
-    await connectionStore.initConnections();
+    await clusterStore.initClusters();
     await topicStore.initTopics();
   } finally {
     initializing.value = false;

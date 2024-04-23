@@ -30,6 +30,7 @@ func main() {
 	browserSvc := services.Browser()
 	prefSvc := services.Preferences()
 
+	clusterSvc := services.ClusterServiceInstance()
 	prefSvc.SetAppVersion(version)
 	windowWidth, windowHeight, maximised := prefSvc.GetWindowSize()
 	windowStartState := options.Normal
@@ -89,9 +90,7 @@ func main() {
 			connSvc,
 			topicSvc,
 			browserSvc,
-			//cliSvc,
-			//monitorSvc,
-			//pubsubSvc,
+			clusterSvc,
 			prefSvc,
 		},
 		Mac: &mac.Options{
